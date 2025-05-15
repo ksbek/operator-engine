@@ -6,61 +6,44 @@ metadata:
   name: ocean-compute-operator
   namespace: ocean-compute
 spec:
-  progressDeadlineSeconds: 600
   replicas: 1
-  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app: ocean-compute-operator
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: ocean-compute-operator
     spec:
       containers:
-      - env:
-        - name: AWS_ACCESS_KEY_ID
-          value: somekey
-        - name: AWS_SECRET_ACCESS_KEY
-          value: somesecret
-        - name: AWS_REGION
-          value: us-east-1
-        - name: AWS_BUCKET_OUTPUT
-          value: outputbucket
-        - name: AWS_BUCKET_ADMINLOGS
-          value: adminbucket
+      - name: ocean-compute-operator
+        image: ksbek/operator-engine:latest
+        imagePullPolicy: Always
+        env:
+        - name: maxJobDuration
+          value: "3600"
+        - name: diskGB
+          value: "10"
+        - name: ramGB
+          value: "4"
         - name: IPFS_OUTPUT
-          value: http://youripfsserver:5001
+          value: https://ipfs.brainstem.dataunion.app
         - name: IPFS_OUTPUT_PREFIX
-          value: http://youripfsserver:8080/ipfs/
+          value: https://gateway.ipfs.brainstem.dataunion.app/ipfs/
         - name: IPFS_ADMINLOGS
-          value: http://youradminipfsserver:5001
+          value: https://ipfs.brainstem.dataunion.app
         - name: IPFS_ADMINLOGS_PREFIX
-          value: http://youradminipfsserver:8080/ipfs/
+          value: https://gateway.ipfs.brainstem.dataunion.app/ipfs/
         - name: IPFS_EXPIRY_TIME
           value: "3600"
-        - name: IPFS_API_KEY
-          value: "apikey"
-        - name: IPFS_API_CLIENT
-          value: "clientid"
         - name: STORAGE_CLASS
           value: standard
         - name: LOG_LEVEL
           value: DEBUG
         - name: POD_CONFIGURATION_CONTAINER
-          value: oceanprotocol/pod-configuration:v1.1.1
-        - name: NOTIFY_START_URL
-          value: http://yourserver/
-        - name: NOTIFY_STOP_URL
-          value: http://yourserver/
+          value: oceanprotocol/pod-configuration:v4main
         - name: POD_PUBLISH_CONTAINER
-          value: oceanprotocol/pod-publishing:v1.1.0
+          value: oceanprotocol/pod-publishing:v4main
         - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
@@ -86,16 +69,13 @@ spec:
             configMapKeyRef:
               key: POSTGRES_PORT
               name: postgres-config
-        image: oceanprotocol/operator-engine:v1.0.2
-        imagePullPolicy: Always
-        name: ocean-compute-operator
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-      dnsPolicy: ClusterFirst
+        volumeMounts:
+        - name: crab-data
+          mountPath: /crab-data
+      volumes:
+      - name: crab-data
+        hostPath:
+          path: /mnt/crab-data
+          type: Directory
       restartPolicy: Always
-      schedulerName: default-scheduler
-      securityContext: {}
-      serviceAccount: db-operator
       serviceAccountName: db-operator
-      terminationGracePeriodSeconds: 30

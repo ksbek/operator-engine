@@ -347,7 +347,20 @@ def create_algorithm_job(body, logger, resources):
     job["spec"]["template"]["spec"]["containers"][0]["volumeMounts"].append(
         volume_mount
     )
-    # Admin logs volume -  Do not mount it here
+    
+    # Mount crab data folder
+    job["spec"]["template"]["spec"]["volumes"].append(
+        {
+            "name": "crab-data", 
+            "hostPath": {
+                "path": "/mnt/crab-data"
+            }
+        }
+    )
+    volume_mount = {"mountPath": "/crab-data", "name": "crab-data", "readOnly": True}
+    job["spec"]["template"]["spec"]["containers"][0]["volumeMounts"].append(
+        volume_mount
+    )
 
     # set the account
     job["spec"]["template"]["spec"]["serviceAccount"] = OperatorConfig.SERVICE_ACCOUNT
@@ -371,7 +384,6 @@ def create_algorithm_job(body, logger, resources):
     )
     job = jobs_common_params(job, logger)
     create_job(logger, body, job)
-
 
 def create_filter_job(body, logger, resources):
     metadata = body["spec"]["metadata"]
